@@ -4,14 +4,11 @@ const { getMaxListeners } = require('./models/user');
 const app = express();
 const User = require("./models/user");
 
-app.post("/signup" , async (req , res) => {
-    const user = new User ({
-        firstName: "Laavanya",
-        lastName: "Kushawaha",
-        emailId: "lavaynaykushwaha143@getMaxListeners.com",
-        password: "Anshu@1234",
+app.use(express.json());
 
-    });
+app.post("/signup" , async (req , res) =>{
+        const user = new User(req.body);
+        
     try{
     await user.save(); // function returning a promiese.
     res.send("user added Succesfully");
