@@ -1,40 +1,37 @@
-
 const express = require('express');
-
+const connnectDB = require("./config/database");
+const { getMaxListeners } = require('./models/user');
 const app = express();
+const User = require("./models/user");
 
-app.get("/user" , (req , res) => {
-    res.send({
-        "firstName" : "Gaurav",
-        "lastName"  : "Satpute",
-        "age" : "22"
+app.post("/signup" , async (req , res) => {
+    const user = new User ({
+        firstName: "Laavanya",
+        lastName: "Kushawaha",
+        emailId: "lavaynaykushwaha143@getMaxListeners.com",
+        password: "Anshu@1234",
+
     });
+    try{
+    await user.save(); // function returning a promiese.
+    res.send("user added Succesfully");
+    }catch(err){
+        res.status(400).send("Error saving the user" + err.message);
+    }
+    //creating new instance of user model.
+    
+
 });
 
-app.post("/user" , (req , res) => {
-   //data saved succesfully in data base
-   res.send("Data Saved in Data BAse");
+connnectDB()
+.then( () => {
+    console.log("dataBase connection established");
+    app.listen(3000 , () => {
+        console.log("server is succefully listening on port 3000");
+    });
+    
+})
+.catch((err) => {
+        console.error("DataBase cannot be connected");
 });
 
-app.delete("/user" , (req , res) => {
-    res.send("Deleted Sucessfully");
-});
-
-
-
-// app.use("/Hello" , (req, res) => {
-//     res.send("hello hello hello");
-// });
-
-// app.use("/sys" , (req, res) => {
-//     res.send("sys sys  hello hello");
-// });
-
-app.use("/test" , (req, res) => {
-    res.send("hello from the server");
-});
-
-
-app.listen(3000 , () => {
-    console.log("server is succefully listening on port 3000");
-});

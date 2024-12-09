@@ -69,6 +69,9 @@ Created TinderDev Project
 run npm Init -> for careting Project -> packege.json created.
 run npm install express -> for creating http Server -> packege.lock.json created and Node Modul file
 anything npm packege we install that files download and store in  node Module
+Connected to database before crating server,
+DataBase-> 1st create schema, creating API to add schema to database. create api form postman
+Error handling using try catch.
 
 Dependacies 
      -> our project is dependent on this packege.
