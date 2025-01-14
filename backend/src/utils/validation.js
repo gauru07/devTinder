@@ -23,6 +23,41 @@ const validateSignUpData = (req) => {
       }
 };
 
+const validateProfileEditData = (req) => {
+  const allowedEditFields = [
+    "fistName",
+     "lastName",
+      "emailId",
+       "skills",
+        "age",
+         "gender",
+           "about",
+           "photo"
+
+  ];
+
+  const isEditAllowed = Object.keys(req.body).every((field) =>
+    allowedEditFields.includes(field)
+ );
+ 
+ return isEditAllowed;
+ };
+
+const passwordValidator = (req) => {
+  const { password } = req.body;
+
+  if (!password) {
+    throw new Error("Password is required!");
+  }
+
+  if(!validator.isStrongPassword(password)){
+    throw new Error("Password must be at least 8 characters!!");
+  }
+  return true;
+ };
+
 module.exports = {
     validateSignUpData,
-}
+     validateProfileEditData,
+     passwordValidator
+};
