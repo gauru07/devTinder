@@ -1,74 +1,148 @@
-const express = require('express');
+const express = require("express");
 const authRouter = express.Router();
 
 const { validateSignUpData } = require("../utils/validation");
 const User = require("../models/user");
-const bcrypt = require('bcrypt');
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-require('dotenv').config();
+require("dotenv").config();
 
+// Signup API
+// Signup API
+authRouter.post("/signup", async (req, res) => {
+  try {
+    const {
+      firstName,
+      lastName,
+      emailId,
+      password,
+      age,
+      gender,
+      profilePic,
+      photos,
+      bio,
+      sexualOrientation,
+      interestedIn,
+      relationshipType,
+      height,
+      location,
+      education,
+      jobTitle,
+      company,
+      religion,
+      ethnicity,
+      languagesSpoken,
+      drinking,
+      smoking,
+      prompts,
+    } = req.body;
 
-//Signup API
-authRouter.post("/signup" , async (req , res) => { 
-    try{ 
-       //validation of signup data
-       validateSignUpData(req);
-       
-       const {firstName , lastName , emailId , password} = req.body;
-       //encrypting password
-       const passwordHash = await bcrypt.hash(password, 10 );
-       //console.log(passwordHash);
-      //Creating a new instance of the User model
-       const user = new User({
-           firstName,
-           lastName,
-           emailId,
-           password: passwordHash,
-           });
-   
-       await user.save(); // function returning a promiese.
-       res.send("user added Succesfully");
-     } catch(err) {
-           res.status(400).send("Error saving the user: " + err.message);
-       }
- });
+    // ✅ validate data
+    validateSignUpData(req);
 
-//Login API
-authRouter.post("/login", async (req , res) => {
-    try{
-     const { emailId , password } = req.body;
- 
-     //validateSignUpData(req);
-     const user = await User.findOne({ emailId : emailId });
-     if(!user){
-         throw new Error("Invalid Credentials");
-     }
-                                        
-     const isPasswordValid = await user.validatePassword(password);
- 
-     if(isPasswordValid){
-         //Craete JWT tocken
-         const token = await user.getJWT();
- 
-         //add tocken to cookie and send response to user
-         res.cookie("token" , token , {
-             expires: new Date(Date.now() + 8 * 3600000) , });
-         res.send("login Succesfull");
-     }else{
-         throw new Error("Wrong password")
-     }
-    }catch (err) {
-         res.status(400).send("ERROR : " + err.message);
-    }  
- });
+    // hash password
+    const passwordHash = await bcrypt.hash(password, 10);
 
-//LogOut API
-authRouter.post("/logout" , async (req, res) => {
-    res.cookie("token" , null, {
-        expires: new Date(Date.now()),
+    // create user with proper defaults
+    const user = new User({
+      firstName,
+      lastName,
+      emailId,
+      password: passwordHash,
+      age: Number(age),
+      gender,
+      profilePic: profilePic || "",
+      photos: photos || [],
+      bio: bio || "",
+      sexualOrientation: sexualOrientation || "",
+      interestedIn: interestedIn || "",
+      relationshipType: relationshipType || "unsure",
+      height: height || "",
+      location: location || "",
+      education: education || "",
+      jobTitle: jobTitle || "",
+      company: company || "",
+      religion: religion || "",
+      ethnicity: ethnicity || "",
+      languagesSpoken: languagesSpoken || [],
+      drinking: drinking || "",
+      smoking: smoking || "",
+      prompts: prompts || "",
     });
-    res.send("You are LogOut!");
-  });
 
+    await user.save();
+    res.status(201).json({ message: "User registered successfully!" });
+  } catch (err) {
+    console.error("Signup error:", err);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+
+
+// Login API
+// Login API
+authRouter.post("/login", async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
+
+    const user = await User.findOne({ emailId });
+    if (!user) {
+      return res.status(400).json({ error: "Invalid Credentials" });
+    }
+
+    const isPasswordValid = await user.validatePassword(password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ error: "Wrong password" });
+    }
+
+    // Create JWT
+    const token = await user.getJWT();
+
+    // Set cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      expires: new Date(Date.now() + 8 * 3600000), // 8 hours
+    });
+
+    res.json({ message: "Login successful" });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Add this to your auth routes
+authRouter.get("/check-auth", async (req, res) => {
+  try {
+    const token = req.cookies.token;
+    
+    if (!token) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "DEV@TINDER$790");
+    const user = await User.findById(decoded._id).select("-password");
+    
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+
+    res.json(user);
+  } catch (err) {
+    res.status(401).json({ error: "Invalid token" });
+  }
+});
+
+// Logout API
+authRouter.post("/logout", (req, res) => {
+  res.cookie("token", null, {
+    httpOnly: true,
+    expires: new Date(0),
+  });
+  res.send("You are logged out!");
+});
 
 module.exports = authRouter;

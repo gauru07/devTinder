@@ -1,32 +1,31 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 
-const userAuth = async (req , res , next) => {
-try{
-    const{ token } = req.cookies;
+const userAuth = async (req, res, next) => {
+  try {
+    const { token } = req.cookies;
 
-    if(!token){
-        throw new Error("token is not valid");
+    if (!token) {
+      return res.status(401).send("Unauthorized: No token provided");
     }
 
-    const decodedObj = await jwt.verify(token , "DEV@TINDER$790");
-    const {_id } = decodedObj;
-    const user = await User.findById( _id);
+    // verify token
+    const decodedObj = jwt.verify(token, process.env.JWT_SECRET || "DEV@TINDER$790");
+    const { _id } = decodedObj;
 
-    if(!user){
-        throw new Error("user is not found");
-    }req.user = user;
-
-    next();}
-    
-catch (err) {
-        res.status(400).send("ERROR: " + err.message);
+    // fetch full user
+    const user = await User.findById(_id).select("-password"); // don’t send hashed password
+    if (!user) {
+      return res.status(404).send("Unauthorized: User not found");
     }
+
+    req.user = user; // attach user object to request
+    next();
+  } catch (err) {
+    res.status(401).send("Unauthorized: " + err.message);
+  }
 };
 
-
 module.exports = {
-    userAuth,
-}
-
-//write code for authentication of user or anyone befor acceess to data
+  userAuth,
+};
