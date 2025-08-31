@@ -8,7 +8,6 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 // Signup API
-// Signup API
 authRouter.post("/signup", async (req, res) => {
   try {
     const {
@@ -40,6 +39,14 @@ authRouter.post("/signup", async (req, res) => {
     // ✅ validate data
     validateSignUpData(req);
 
+    // ✅ Check if email already exists
+    const existingUser = await User.findOne({ emailId: emailId.toLowerCase() });
+    if (existingUser) {
+      return res.status(400).json({ 
+        error: "Email already registered. Please use a different email or try logging in." 
+      });
+    }
+
     // hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
@@ -47,7 +54,7 @@ authRouter.post("/signup", async (req, res) => {
     const user = new User({
       firstName,
       lastName,
-      emailId,
+      emailId: emailId.toLowerCase(), // Ensure email is lowercase
       password: passwordHash,
       age: Number(age),
       gender,
@@ -74,19 +81,24 @@ authRouter.post("/signup", async (req, res) => {
     res.status(201).json({ message: "User registered successfully!" });
   } catch (err) {
     console.error("Signup error:", err);
+    
+    // Handle MongoDB duplicate key errors specifically
+    if (err.code === 11000) {
+      return res.status(400).json({ 
+        error: "Email already registered. Please use a different email or try logging in." 
+      });
+    }
+    
     res.status(400).json({ error: err.message });
   }
 });
 
-
-
-// Login API
 // Login API
 authRouter.post("/login", async (req, res) => {
   try {
     const { emailId, password } = req.body;
 
-    const user = await User.findOne({ emailId });
+    const user = await User.findOne({ emailId: emailId.toLowerCase() });
     if (!user) {
       return res.status(400).json({ error: "Invalid Credentials" });
     }
@@ -142,7 +154,7 @@ authRouter.post("/logout", (req, res) => {
     httpOnly: true,
     expires: new Date(0),
   });
-  res.send("You are logged out!");
+  res.json({ message: "You are logged out!" });
 });
 
 module.exports = authRouter;

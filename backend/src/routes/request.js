@@ -41,7 +41,7 @@ requestRouter.post(
 
         });
         if(existingConnectionRequest){
-            return  res.status(400).send({ message: "Connevction request alerdy exists!"});
+            return  res.status(400).json({ message: "Connection request already exists!"});
         }
 
         //creating a instance of the BD
@@ -58,7 +58,7 @@ requestRouter.post(
             data,
         });
        } catch(err){
-        res.status(400).send("ERROR:" + err.message);
+        res.status(400).json({ error: err.message });
        }
 });
 
@@ -98,7 +98,7 @@ requestRouter.post("/request/review/:status/:requestId" ,
                         });
 
                         }catch(err){ 
-                            res.status(400).send("ERROR:" + err.message);
+                            res.status(400).json({ error: err.message });
                         }
 
                     });

@@ -21,14 +21,20 @@ userRouter.get("/user/request/received", userAuth, async (req, res) => {
       select: USER_SAFE_DATA, // ✅ include full safe data
     });
 
-    const data = connectionRequests.map((row) => row.fromUserId);
+    // Fix: Return proper structure with requestId
+    const data = connectionRequests.map((request) => ({
+      requestId: request._id,
+      user: request.fromUserId,
+      status: request.status,
+      createdAt: request.createdAt
+    }));
 
     res.json({
       message: "data fetch successfully",
       data,
     });
   } catch (err) {
-    res.status(400).send("ERROR " + err.message);
+    res.status(400).json({ error: err.message });
   }
 });
 
@@ -61,76 +67,11 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
 
     res.json({ data });
   } catch (err) {
-    res.status(400).send({ message: err.message });
+    res.status(400).json({ error: err.message });
   }
 });
 
-// ✅ 3. Feed API
-// routes/user.js
-// userRouter.get("/feed", userAuth, async (req, res) => {
-//   try {
-//     const loggedInUser = req.user;
-//     console.log("Feed request from user:", loggedInUser._id);
-
-//     const page = parseInt(req.query.page) || 1;
-//     let limit = parseInt(req.query.limit) || 10;
-//     limit = limit > 50 ? 50 : limit;
-//     const skip = (page - 1) * limit;
-
-//     // Find all connection requests involving the logged-in user
-//     const connectionRequests = await ConnectionRequest.find({
-//       $or: [
-//         { fromUserId: loggedInUser._id },
-//         { toUserId: loggedInUser._id },
-//       ],
-//     }).select("fromUserId toUserId");
-
-//     console.log("Connection requests found:", connectionRequests.length);
-
-//     const hideUserFromFeed = new Set();
-
-//     connectionRequests.forEach((req) => {
-//       hideUserFromFeed.add(req.fromUserId.toString());
-//       hideUserFromFeed.add(req.toUserId.toString());
-//     });
-
-//     console.log("Hiding users from feed:", Array.from(hideUserFromFeed));
-
-//     const users = await User.find({
-//       $and: [
-//         { _id: { $nin: Array.from(hideUserFromFeed) } },
-//         { _id: { $ne: loggedInUser._id } },
-//       ],
-//     })
-//       .select(USER_SAFE_DATA)
-//       .skip(skip)
-//       .limit(limit);
-
-//     console.log("Users found for feed:", users.length);
-//     res.send(users);
-//   } catch (error) {
-//     console.error("Error in /feed endpoint:", error);
-//     res.status(400).json({ error: error.message });
-//   }
-// });
-
-// routes/user.js - Update the feed endpoint
-// userRouter.get("/feed", userAuth, async (req, res) => {
-//   try {
-//     const loggedInUser = req.user;
-
-//     // Get all users except the logged-in user
-//     const users = await User.find({
-//       _id: { $ne: loggedInUser._id }
-//     }).select(USER_SAFE_DATA);
-
-//     res.send(users);
-//   } catch (error) {
-//     console.error("Error in /feed endpoint:", error);
-//     res.status(400).json({ error: error.message });
-//   }
-// });
-
+// ✅ 3. Feed API - Fixed to return proper data structure
 userRouter.get("/feed", userAuth, async (req, res) => {
   try {
     const loggedInUser = req.user;
@@ -142,7 +83,9 @@ userRouter.get("/feed", userAuth, async (req, res) => {
     }).select(USER_SAFE_DATA);
 
     console.log("Found users:", users.length);
-    res.send(users);
+    
+    // Fix: Return data wrapper as expected by frontend
+    res.json({ data: users });
   } catch (error) {
     console.error("Error in /feed endpoint:", error);
     res.status(400).json({ error: error.message });
