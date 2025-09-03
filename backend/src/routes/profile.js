@@ -12,7 +12,8 @@ const path = require("path");
 // ==========================
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/');
+    // 🔧 FIX: Use absolute path to match static file serving
+    cb(null, path.join(__dirname, '../../uploads/'));
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -109,9 +110,26 @@ profileRouter.post("/profile/upload-photos", userAuth, upload.array('photos', 5)
       return res.status(400).json({ error: "No files uploaded" });
     }
 
-    // Get file paths
-    const photoUrls = req.files.map(file => `/${file.path}`);
+    // 🔍 DEBUG: Log what file.path contains
+    console.log('=== PHOTO UPLOAD DEBUG ===');
+    req.files.forEach((file, index) => {
+      console.log(`File ${index}:`);
+      console.log('  - file.path:', file.path);
+      console.log('  - file.filename:', file.filename);
+      console.log('  - file.originalname:', file.originalname);
+    });
+
+    // 🔧 FIX: Generate correct relative URLs for database storage
+    const photoUrls = req.files.map(file => {
+      // Always generate relative URLs that match the static file serving route
+      const photoUrl = `/uploads/${file.filename}`;
+      console.log('  - Generated photoUrl:', photoUrl);
+      return photoUrl;
+    });
     
+    console.log('Final photoUrls:', photoUrls);
+    console.log('=== END DEBUG ===');
+
     // Add photos to user's photos array
     if (!loggedInUser.photos) {
       loggedInUser.photos = [];
@@ -132,6 +150,7 @@ profileRouter.post("/profile/upload-photos", userAuth, upload.array('photos', 5)
       photos: photoUrls
     });
   } catch (err) {
+    console.error('Photo upload error:', err);
     res.status(400).json({ error: err.message });
   }
 });
