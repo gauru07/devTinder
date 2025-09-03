@@ -1,16 +1,16 @@
-// // app.js
-
 // app.js
+require('dotenv').config();
+
 const express = require('express');
-const connnectDB = require("./config/database");
+const connectDB = require("./config/database"); // Fixed the typo
 const cookieParser = require("cookie-parser");
 const cors = require('cors');
 const path = require('path');
 const app = express();
 
-// Enable CORS
+// Enable CORS using environment variable or fallback to localhost (for local development)
 app.use(cors({
-  origin: 'http://localhost:3000', 
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }));
 
@@ -49,7 +49,7 @@ app.use("/", userRouter);
 app.use("/", chatRouter);
 
 // Connect DB (server will be started in start.js)
-connnectDB()
+connectDB()
   .then(() => {
     console.log("Database connection established");
   })
