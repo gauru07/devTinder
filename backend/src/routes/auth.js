@@ -111,11 +111,13 @@ authRouter.post("/login", async (req, res) => {
     // Create JWT
     const token = await user.getJWT();
 
-    // Set cookie
+    // Set cookie with cross-origin support
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "none", // Allow cross-origin requests
+      domain: ".onrender.com", // Allow subdomains
+      path: "/",
       expires: new Date(Date.now() + 8 * 3600000), // 8 hours
     });
 
@@ -152,6 +154,10 @@ authRouter.get("/check-auth", async (req, res) => {
 authRouter.post("/logout", (req, res) => {
   res.cookie("token", null, {
     httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none", // Allow cross-origin requests
+    domain: ".onrender.com", // Allow subdomains
+    path: "/",
     expires: new Date(0),
   });
   res.json({ message: "You are logged out!" });
