@@ -1,16 +1,21 @@
+require('dotenv').config();
 const app = require('./app');
 const http = require('http');
 const socketIo = require('socket.io');
 const jwt = require('jsonwebtoken');
 const User = require('./models/user');
+const connectDB = require('./config/database');
 
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
     credentials: true
   }
 });
+
+// Connect to database
+connectDB();
 
 // Socket.IO authentication middleware
 io.use(async (socket, next) => {

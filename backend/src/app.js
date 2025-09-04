@@ -8,9 +8,9 @@ const cors = require('cors');
 const path = require('path');
 const app = express();
 
-// Enable CORS using environment variable or fallback to localhost (for local development)
+// Enable CORS
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000', 
   credentials: true
 }));
 
