@@ -5,7 +5,10 @@ const connectDB = async () => {
         const mongoURI = process.env.MONGODB_URI || "mongodb+srv://gaurav07:V62wwa0TymQGMzjq@project1.jr3ma.mongodb.net/devTinder";
         
         console.log('🔍 Attempting to connect to MongoDB...');
-        console.log('📍 Connection string:', mongoURI.replace(/\/\/.*@/, '//***:***@'));
+        
+        // Hide credentials in logs for security
+        const safeURI = mongoURI.replace(/\/\/.*@/, '//***:***@');
+        console.log('📍 Connection string:', safeURI);
         
         await mongoose.connect(mongoURI);
         
